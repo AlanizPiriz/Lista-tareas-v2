@@ -56,7 +56,7 @@ const App = () => {
     Notification.requestPermission().then((permission) => {
       if (permission === 'granted') {
         getToken(messaging, {
-          vapidKey: 'HiSJgqXBobIRa73DitRSgkYAdh4jmfMYmmhHQuwqHQs',
+          vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE-YU01cssRD5f3fKjY',
         }).then((currentToken) => {
           if (currentToken) {
             console.log('Token FCM:', currentToken);
