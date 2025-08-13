@@ -71,7 +71,7 @@ const App = () => {
   };
 
   const sendNotificationBackend = async (token: string, message: string) => {
-  await fetch('http://localhost:4000/send-notification', {
+  await fetch('https://9980796edc75.ngrok-free.app -> http://localhost:4000', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
