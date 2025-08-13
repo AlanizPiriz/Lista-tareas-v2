@@ -4,4 +4,5 @@ export interface Task {
     id: string;
     text: string;
     area: Area;
+    fecha?: string;
 }

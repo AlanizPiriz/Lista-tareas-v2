@@ -92,11 +92,13 @@ const App = () => {
   };
 
   const addTask = async (text: string, area: Area) => {
-    await addDoc(collection(db, 'tasks'), {
-      text,
-      area,
-    });
-  };
+  await addDoc(collection(db, 'tasks'), {
+    text,
+    area,
+    fecha: new Date().toISOString(), 
+  });
+};
+
 
   const deleteTask = async (area: Area, index: number) => {
     const task = tasks.filter((t) => t.area === area)[index];
