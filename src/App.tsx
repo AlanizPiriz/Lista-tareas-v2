@@ -14,29 +14,57 @@ import Home from './components/Home';
 import TaskPage from './components/Task';
 import type { Task, Area } from './Types';
 
+
+//capturar errores 
+
+
+
+
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        getToken(messaging, {
-          vapidKey: 'HiSJgqXBobIRa73DitRSgkYAdh4jmfMYmmhHQuwqHQs',
-        }).then((currentToken) => {
-          if (currentToken) {
-            console.log('Token FCM:', currentToken);
-          } else {
-            console.log('No se pudo obtener el token.');
-          }
-        });
-      }
+  // Detectar iPhone
+  const isIphone =
+  /iPhone/.test(navigator.userAgent) && !(window as any).MSStream;
+
+
+  if (isIphone) {
+    window.addEventListener('error', (event) => {
+      console.error('🛑 Error capturado en iPhone:', event.message, event.filename, event.lineno);
+      alert(`Error en iPhone:\n${event.message}\nArchivo: ${event.filename}\nLínea: ${event.lineno}`);
     });
 
-    onMessage(messaging, (payload) => {
-      console.log('Mensaje recibido:', payload);
-      alert(`Notificación: ${payload.notification?.title}`);
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('🚨 Promesa no manejada:', event.reason);
+      alert(`Promesa no manejada en iPhone:\n${event.reason}`);
     });
-  }, []);
+
+    console.log('📱 Dispositivo iPhone detectado');
+  }
+
+  // Permiso de notificación
+  Notification.requestPermission().then((permission) => {
+    if (permission === 'granted') {
+      getToken(messaging, {
+        vapidKey: 'HiSJgqXBobIRa73DitRSgkYAdh4jmfMYmmhHQuwqHQs',
+      }).then((currentToken) => {
+        if (currentToken) {
+          console.log('Token FCM:', currentToken);
+        } else {
+          console.log('No se pudo obtener el token.');
+        }
+      });
+    }
+  });
+
+  // Escuchar mensajes entrantes
+  onMessage(messaging, (payload) => {
+    console.log('Mensaje recibido:', payload);
+    alert(`Notificación: ${payload.notification?.title}`);
+  });
+}, []);
+
 
   const subscribeToTasks = (area: Area) => {
     const q = query(collection(db, 'tasks'), where('area', '==', area));
