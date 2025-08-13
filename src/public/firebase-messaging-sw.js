@@ -2,12 +2,12 @@ importScripts('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_AUTH_DOMAIN",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_STORAGE_BUCKET",
-  messagingSenderId: "TU_MESSAGING_SENDER_ID",
-  appId: "TU_APP_ID",
+  apiKey: "AIzaSyAduw3rNK7888j3YJ6h1JhG8HRxq2cubwo",
+  authDomain: "tareas-celemyr.firebaseapp.com",
+  projectId: "tareas-celemyr",
+  storageBucket: "tareas-celemyr.firebasestorage.app",
+  messagingSenderId: "665957687992",
+  appId: "1:665957687992:web:685172daa7d1eeba4a4a4d"
 });
 
 const messaging = firebase.messaging();
