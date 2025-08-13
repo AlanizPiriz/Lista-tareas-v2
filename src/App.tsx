@@ -24,17 +24,25 @@ const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-  // Detectar iPhone
+  // ✅ Detectar si es iPhone
   const isIphone =
-  /iPhone/.test(navigator.userAgent) && !(window as any).MSStream;
-
+    /iPhone/.test(navigator.userAgent) && !(window as any).MSStream;
 
   if (isIphone) {
+    // ✅ Capturar errores generales
     window.addEventListener('error', (event) => {
-      console.error('🛑 Error capturado en iPhone:', event.message, event.filename, event.lineno);
-      alert(`Error en iPhone:\n${event.message}\nArchivo: ${event.filename}\nLínea: ${event.lineno}`);
+      console.error(
+        '🛑 Error capturado en iPhone:',
+        event.message,
+        event.filename,
+        event.lineno
+      );
+      alert(
+        `Error en iPhone:\n${event.message}\nArchivo: ${event.filename}\nLínea: ${event.lineno}`
+      );
     });
 
+    // ✅ Capturar promesas no manejadas
     window.addEventListener('unhandledrejection', (event) => {
       console.error('🚨 Promesa no manejada:', event.reason);
       alert(`Promesa no manejada en iPhone:\n${event.reason}`);
@@ -43,27 +51,32 @@ const App = () => {
     console.log('📱 Dispositivo iPhone detectado');
   }
 
-  // Permiso de notificación
-  Notification.requestPermission().then((permission) => {
-    if (permission === 'granted') {
-      getToken(messaging, {
-        vapidKey: 'HiSJgqXBobIRa73DitRSgkYAdh4jmfMYmmhHQuwqHQs',
-      }).then((currentToken) => {
-        if (currentToken) {
-          console.log('Token FCM:', currentToken);
-        } else {
-          console.log('No se pudo obtener el token.');
-        }
-      });
-    }
-  });
+  // ✅ Verificar que Notification está disponible
+  if ('Notification' in window) {
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        getToken(messaging, {
+          vapidKey: 'HiSJgqXBobIRa73DitRSgkYAdh4jmfMYmmhHQuwqHQs',
+        }).then((currentToken) => {
+          if (currentToken) {
+            console.log('Token FCM:', currentToken);
+          } else {
+            console.log('No se pudo obtener el token.');
+          }
+        });
+      }
+    });
 
-  // Escuchar mensajes entrantes
-  onMessage(messaging, (payload) => {
-    console.log('Mensaje recibido:', payload);
-    alert(`Notificación: ${payload.notification?.title}`);
-  });
+    // ✅ Escuchar notificaciones entrantes
+    onMessage(messaging, (payload) => {
+      console.log('Mensaje recibido:', payload);
+      alert(`Notificación: ${payload.notification?.title}`);
+    });
+  } else {
+    console.warn('🔕 API Notification no soportada en este navegador.');
+  }
 }, []);
+
 
 
   const subscribeToTasks = (area: Area) => {
