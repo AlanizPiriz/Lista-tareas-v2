@@ -1,0 +1,76 @@
+
+  body {
+  display: flex;
+  justify-content: center;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  background-color: #333;
+}
+
+.container {
+  width: 80vw; /* Ajusta este valor para más o menos ancho */
+  max-width: 800px; /* Opcional: limita el ancho en pantallas grandes */
+}
+
+
+ul {
+  list-style-type: none;
+  padding: 1px;
+  width: 100%;
+}
+
+li {
+  margin-bottom: 5px;
+  border-bottom: 10px solid #333;
+  width: 100%;
+} 
+
+li button {
+  background-color: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 6px 10px;
+}
+
+li button:hover {
+  background-color: #c0392b;
+}
+
+input {
+  padding: 8px;
+  margin-right: 5px;
+  width: calc(100% - 100px); /* deja espacio para el botón */
+}
+
+button {
+  padding: 8px;
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.task {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+  background-color: #f9f9f9;
+  color: black;
+  border-radius: 5px;
+  width: 88%;
+}
+
+.volver{
+  background-color: black;
+}
