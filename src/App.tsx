@@ -16,51 +16,55 @@ import type { Task, Area } from './Types';
 
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
 
   useEffect(() => {
-  const isIphone = /iPhone/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isIphone = /iPhone/.test(navigator.userAgent) && !(window as any).MSStream;
 
-  if (isIphone) {
-    window.addEventListener('error', (event) => {
-      console.error('🛑 Error capturado en iPhone:', event.message, event.filename, event.lineno);
-      alert(`Error en iPhone:\n${event.message}\nArchivo: ${event.filename}\nLínea: ${event.lineno}`);
-    });
+    if (isIphone) {
+      window.addEventListener('error', (event) => {
+        console.error('🛑 Error capturado en iPhone:', event.message, event.filename, event.lineno);
+        alert(`Error en iPhone:\n${event.message}\nArchivo: ${event.filename}\nLínea: ${event.lineno}`);
+      });
 
-    window.addEventListener('unhandledrejection', (event) => {
-      console.error('🚨 Promesa no manejada:', event.reason);
-      alert(`Promesa no manejada en iPhone:\n${event.reason}`);
-    });
+      window.addEventListener('unhandledrejection', (event) => {
+        console.error('🚨 Promesa no manejada:', event.reason);
+        alert(`Promesa no manejada en iPhone:\n${event.reason}`);
+      });
 
-    console.log('📱 Dispositivo iPhone detectado');
-  }
+      console.log('📱 Dispositivo iPhone detectado');
+    }
 
-  if ('Notification' in window && 'serviceWorker' in navigator) {
-    Notification.requestPermission().then(async (permission) => {
-      if (permission === 'granted') {
-        const registration = await navigator.serviceWorker.ready;
-        const token = await getToken(messaging, {
-          vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE-YU01cssRD5f3fKjY', // ← pon tu VAPID key aquí
-          serviceWorkerRegistration: registration,
-        });
+    if ('Notification' in window && 'serviceWorker' in navigator) {
+      Notification.requestPermission().then(async (permission) => {
+        if (permission === 'granted') {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            const token = await getToken(messaging, {
+              vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE-YU01cssRD5f3fKjY',
+              serviceWorkerRegistration: registration,
+            });
 
-        if (token) {
-          console.log('🔐 Token FCM:', token);
-          // Puedes enviarlo al backend o guardarlo si hace falta
-        } else {
-          console.warn('No se pudo obtener el token FCM');
+            if (token) {
+              console.log('🔐 Token FCM:', token);
+              setFcmToken(token);
+            } else {
+              console.warn('No se pudo obtener el token FCM');
+            }
+          } catch (err) {
+            console.error('❌ Error obteniendo el token:', err);
+          }
         }
-      }
-    });
+      });
 
-    onMessage(messaging, (payload) => {
-      console.log('📩 Mensaje recibido:', payload);
-      alert(`🔔 Notificación: ${payload.notification?.title}`);
-    });
-  } else {
-    console.warn('🔕 API Notification o Service Worker no soportada');
-  }
-}, []);
-
+      onMessage(messaging, (payload) => {
+        console.log('📩 Mensaje recibido:', payload);
+        alert(`🔔 Notificación: ${payload.notification?.title}`);
+      });
+    } else {
+      console.warn('🔕 API Notification o Service Worker no soportada');
+    }
+  }, []);
 
   const subscribeToTasks = (area: Area) => {
     const q = query(collection(db, 'tasks'), where('area', '==', area));
@@ -75,34 +79,41 @@ const App = () => {
   };
 
   const sendNotificationBackend = async (token: string, message: string) => {
-  await fetch('https://lista-tareas-backend.onrender.com/send-notification', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      token,
-      title: 'Nueva tarea',
-      body: message,
-    }),
-  });
-};
+    try {
+      const res = await fetch('https://lista-tareas-backend.onrender.com/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          title: 'Nueva tarea',
+          body: message,
+        }),
+      });
 
-const addTask = async (text: string, area: Area) => {
-  await addDoc(collection(db, 'tasks'), {
-    text,
-    area,
-    fecha: new Date().toISOString(),
-  });
+      if (!res.ok) {
+        const error = await res.text();
+        console.error('⚠️ Error desde el backend:', error);
+      } else {
+        console.log('✅ Notificación enviada correctamente');
+      }
+    } catch (error) {
+      console.error('❌ Error al hacer fetch al backend:', error);
+    }
+  };
 
-  const currentToken = await getToken(messaging, {
-    vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE-YU01cssRD5f3fKjY',
-  });
+  const addTask = async (text: string, area: Area) => {
+    await addDoc(collection(db, 'tasks'), {
+      text,
+      area,
+      fecha: new Date().toISOString(),
+    });
 
-  if (currentToken) {
-    await sendNotificationBackend(currentToken, `Nueva tarea en ${area}: ${text}`);
-  } else {
-    console.warn('No se pudo obtener el token para enviar la notificación.');
-  }
-};
+    if (fcmToken) {
+      await sendNotificationBackend(fcmToken, `Nueva tarea en ${area}: ${text}`);
+    } else {
+      console.warn('⚠️ No se encontró token para enviar notificación');
+    }
+  };
 
   const deleteTask = async (area: Area, index: number) => {
     const task = tasks.filter((t) => t.area === area)[index];
