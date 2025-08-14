@@ -75,7 +75,7 @@ const App = () => {
   };
 
   const sendNotificationBackend = async (token: string, message: string) => {
-  await fetch('https://9980796edc75.ngrok-free.app/send-notification', {
+  await fetch('https://lista-tareas-backend.onrender.com/send-notification', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
