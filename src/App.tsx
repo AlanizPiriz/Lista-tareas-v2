@@ -9,32 +9,15 @@ import {
   onSnapshot,
   deleteDoc,
   doc,
-  setDoc,
 } from 'firebase/firestore';
-import { deleteToken } from 'firebase/messaging';
 import Home from './components/Home';
 import TaskPage from './components/Task';
 import type { Task, Area } from './Types';
+import { deleteToken } from 'firebase/messaging';
 
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
-
-  // 🧠 Guarda el token FCM en Firestore
-  const saveTokenToFirestore = async (token: string) => {
-    try {
-      await setDoc(doc(db, 'tokens', token), {
-        token,
-        userId: 'anon', // podés usar auth.currentUser?.uid si tenés auth
-        area: 'General',
-        fecha: new Date().toISOString(),
-        userAgent: navigator.userAgent,
-      });
-      console.log('✅ Token guardado en Firestore');
-    } catch (error) {
-      console.error('❌ Error al guardar token:', error);
-    }
-  };
 
   useEffect(() => {
     const isIphone = /iPhone/.test(navigator.userAgent) && !(window as any).MSStream;
@@ -71,10 +54,18 @@ const App = () => {
             if (token) {
               console.log('🔐 Token FCM actualizado:', token);
               setFcmToken(token);
-              await saveTokenToFirestore(token); // 🔄 Guardar en Firestore
+
+              // ✅ Guardar token en Firestore
+              await addDoc(collection(db, 'tokens'), {
+                token,
+                createdAt: new Date(),
+              });
+
+              console.log('✅ Token guardado en Firestore');
             } else {
               console.warn('⚠️ No se pudo obtener un token nuevo');
             }
+
           } catch (err) {
             console.error('❌ Error actualizando token:', err);
           }
