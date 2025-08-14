@@ -9,7 +9,9 @@ import {
   onSnapshot,
   deleteDoc,
   doc,
+  setDoc,
 } from 'firebase/firestore';
+import { deleteToken } from 'firebase/messaging';
 import Home from './components/Home';
 import TaskPage from './components/Task';
 import type { Task, Area } from './Types';
@@ -17,6 +19,22 @@ import type { Task, Area } from './Types';
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
+
+  // 🧠 Guarda el token FCM en Firestore
+  const saveTokenToFirestore = async (token: string) => {
+    try {
+      await setDoc(doc(db, 'tokens', token), {
+        token,
+        userId: 'anon', // podés usar auth.currentUser?.uid si tenés auth
+        area: 'General',
+        fecha: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+      });
+      console.log('✅ Token guardado en Firestore');
+    } catch (error) {
+      console.error('❌ Error al guardar token:', error);
+    }
+  };
 
   useEffect(() => {
     const isIphone = /iPhone/.test(navigator.userAgent) && !(window as any).MSStream;
@@ -40,19 +58,25 @@ const App = () => {
         if (permission === 'granted') {
           try {
             const registration = await navigator.serviceWorker.ready;
+
+            // 🧽 Borrar token viejo
+            await deleteToken(messaging);
+
+            // 🔐 Obtener token nuevo
             const token = await getToken(messaging, {
               vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE-YU01cssRD5f3fKjY',
               serviceWorkerRegistration: registration,
             });
 
             if (token) {
-              console.log('🔐 Token FCM:', token);
+              console.log('🔐 Token FCM actualizado:', token);
               setFcmToken(token);
+              await saveTokenToFirestore(token); // 🔄 Guardar en Firestore
             } else {
-              console.warn('No se pudo obtener el token FCM');
+              console.warn('⚠️ No se pudo obtener un token nuevo');
             }
           } catch (err) {
-            console.error('❌ Error obteniendo el token:', err);
+            console.error('❌ Error actualizando token:', err);
           }
         }
       });
