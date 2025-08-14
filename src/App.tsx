@@ -39,7 +39,7 @@ const App = () => {
       if (permission === 'granted') {
         const registration = await navigator.serviceWorker.ready;
         const token = await getToken(messaging, {
-          vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE', // ← pon tu VAPID key aquí
+          vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE-YU01cssRD5f3fKjY', // ← pon tu VAPID key aquí
           serviceWorkerRegistration: registration,
         });
 
