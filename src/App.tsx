@@ -18,45 +18,49 @@ const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    const isIphone = /iPhone/.test(navigator.userAgent) && !(window as any).MSStream;
+  const isIphone = /iPhone/.test(navigator.userAgent) && !(window as any).MSStream;
 
-    if (isIphone) {
-      window.addEventListener('error', (event) => {
-        console.error('🛑 Error capturado en iPhone:', event.message, event.filename, event.lineno);
-        alert(`Error en iPhone:\n${event.message}\nArchivo: ${event.filename}\nLínea: ${event.lineno}`);
-      });
+  if (isIphone) {
+    window.addEventListener('error', (event) => {
+      console.error('🛑 Error capturado en iPhone:', event.message, event.filename, event.lineno);
+      alert(`Error en iPhone:\n${event.message}\nArchivo: ${event.filename}\nLínea: ${event.lineno}`);
+    });
 
-      window.addEventListener('unhandledrejection', (event) => {
-        console.error('🚨 Promesa no manejada:', event.reason);
-        alert(`Promesa no manejada en iPhone:\n${event.reason}`);
-      });
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('🚨 Promesa no manejada:', event.reason);
+      alert(`Promesa no manejada en iPhone:\n${event.reason}`);
+    });
 
-      console.log('📱 Dispositivo iPhone detectado');
-    }
+    console.log('📱 Dispositivo iPhone detectado');
+  }
 
-    if ('Notification' in window) {
-      Notification.requestPermission().then((permission) => {
-        if (permission === 'granted') {
-          getToken(messaging, {
-            vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE-YU01cssRD5f3fKjY',
-          }).then((currentToken) => {
-            if (currentToken) {
-              console.log('Token FCM:', currentToken);
-            } else {
-              console.log('No se pudo obtener el token.');
-            }
-          });
+  if ('Notification' in window && 'serviceWorker' in navigator) {
+    Notification.requestPermission().then(async (permission) => {
+      if (permission === 'granted') {
+        const registration = await navigator.serviceWorker.ready;
+        const token = await getToken(messaging, {
+          vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE', // ← pon tu VAPID key aquí
+          serviceWorkerRegistration: registration,
+        });
+
+        if (token) {
+          console.log('🔐 Token FCM:', token);
+          // Puedes enviarlo al backend o guardarlo si hace falta
+        } else {
+          console.warn('No se pudo obtener el token FCM');
         }
-      });
+      }
+    });
 
-      onMessage(messaging, (payload) => {
-        console.log('Mensaje recibido:', payload);
-        alert(`Notificación: ${payload.notification?.title}`);
-      });
-    } else {
-      console.warn('🔕 API Notification no soportada en este navegador.');
-    }
-  }, []);
+    onMessage(messaging, (payload) => {
+      console.log('📩 Mensaje recibido:', payload);
+      alert(`🔔 Notificación: ${payload.notification?.title}`);
+    });
+  } else {
+    console.warn('🔕 API Notification o Service Worker no soportada');
+  }
+}, []);
+
 
   const subscribeToTasks = (area: Area) => {
     const q = query(collection(db, 'tasks'), where('area', '==', area));
