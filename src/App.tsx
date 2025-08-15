@@ -44,7 +44,7 @@ const App = () => {
           if (permission === 'granted') {
             try {
               const token = await getToken(messaging, {
-                vapidKey: 'TU_VAPID_KEY_AQUI',
+                vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE-YU01cssRD5f3fKjY',
                 serviceWorkerRegistration: registration,
               });
 
