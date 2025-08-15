@@ -14,6 +14,7 @@ import Home from './components/Home';
 import TaskPage from './components/Task';
 import type { Task, Area } from './Types';
 import { deleteToken } from 'firebase/messaging';
+import { setDoc } from 'firebase/firestore';
 
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -60,9 +61,9 @@ const App = () => {
                   setFcmToken(token);
 
                   // ✅ Guardar token en Firestore
-                  await addDoc(collection(db, 'tokens'), {
-                    token,
-                    createdAt: new Date(),
+                  await setDoc(doc(db, 'tokens', token), {
+                        token,
+                        createdAt: new Date(),
                   });
 
                   console.log('✅ Token guardado en Firestore');
