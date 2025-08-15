@@ -37,45 +37,52 @@ const App = () => {
     }
 
     if ('Notification' in window && 'serviceWorker' in navigator) {
-      Notification.requestPermission().then(async (permission) => {
-        if (permission === 'granted') {
-          try {
-            const registration = await navigator.serviceWorker.ready;
+      // 🚀 Registrar el service worker manualmente para asegurar que esté activo en iPhone y otros dispositivos
+      navigator.serviceWorker
+        .register('/firebase-messaging-sw.js')
+        .then(async (registration) => {
+          console.log('✅ Service Worker registrado con éxito:', registration);
 
-            // 🧽 Borrar token viejo
-            await deleteToken(messaging);
+          Notification.requestPermission().then(async (permission) => {
+            if (permission === 'granted') {
+              try {
+                // 🧽 Borrar token viejo si existe
+                await deleteToken(messaging);
 
-            // 🔐 Obtener token nuevo
-            const token = await getToken(messaging, {
-              vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE-YU01cssRD5f3fKjY',
-              serviceWorkerRegistration: registration,
-            });
+                // 🔐 Obtener token nuevo con SW registrado
+                const token = await getToken(messaging, {
+                  vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE-YU01cssRD5f3fKjY',
+                  serviceWorkerRegistration: registration,
+                });
 
-            if (token) {
-              console.log('🔐 Token FCM actualizado:', token);
-              setFcmToken(token);
+                if (token) {
+                  console.log('🔐 Token FCM actualizado:', token);
+                  setFcmToken(token);
 
-              // ✅ Guardar token en Firestore
-              await addDoc(collection(db, 'tokens'), {
-                token,
-                createdAt: new Date(),
-              });
+                  // ✅ Guardar token en Firestore
+                  await addDoc(collection(db, 'tokens'), {
+                    token,
+                    createdAt: new Date(),
+                  });
 
-              console.log('✅ Token guardado en Firestore');
-            } else {
-              console.warn('⚠️ No se pudo obtener un token nuevo');
+                  console.log('✅ Token guardado en Firestore');
+                } else {
+                  console.warn('⚠️ No se pudo obtener un token nuevo');
+                }
+              } catch (err) {
+                console.error('❌ Error actualizando token:', err);
+              }
             }
+          });
 
-          } catch (err) {
-            console.error('❌ Error actualizando token:', err);
-          }
-        }
-      });
-
-      onMessage(messaging, (payload) => {
-        console.log('📩 Mensaje recibido:', payload);
-        alert(`🔔 Notificación: ${payload.notification?.title}`);
-      });
+          onMessage(messaging, (payload) => {
+            console.log('📩 Mensaje recibido:', payload);
+            alert(`🔔 Notificación: ${payload.notification?.title}`);
+          });
+        })
+        .catch((err) => {
+          console.error('❌ Error al registrar Service Worker:', err);
+        });
     } else {
       console.warn('🔕 API Notification o Service Worker no soportada');
     }
