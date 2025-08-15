@@ -1,3 +1,4 @@
+// App.tsx
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { db, messaging, getToken, onMessage } from './firebase';
@@ -9,83 +10,80 @@ import {
   onSnapshot,
   deleteDoc,
   doc,
+  getDoc,
+  setDoc,
 } from 'firebase/firestore';
+
 import Home from './components/Home';
 import TaskPage from './components/Task';
 import type { Task, Area } from './Types';
-import { deleteToken } from 'firebase/messaging';
-import { setDoc } from 'firebase/firestore';
 
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [fcmToken, setFcmToken] = useState<string | null>(null);
 
   useEffect(() => {
     const isIphone = /iPhone/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
-    if (isIphone) {
-      window.addEventListener('error', (event) => {
-        console.error('🛑 Error capturado en iPhone:', event.message, event.filename, event.lineno);
-        alert(`Error en iPhone:\n${event.message}\nArchivo: ${event.filename}\nLínea: ${event.lineno}`);
-      });
-
-      window.addEventListener('unhandledrejection', (event) => {
-        console.error('🚨 Promesa no manejada:', event.reason);
-        alert(`Promesa no manejada en iPhone:\n${event.reason}`);
-      });
-
-      console.log('📱 Dispositivo iPhone detectado');
+    if (isIphone && !isStandalone) {
+      alert('⚠️ Para recibir notificaciones, debes agregar esta app a tu pantalla de inicio desde Safari.');
     }
 
     if ('Notification' in window && 'serviceWorker' in navigator) {
-      // 🚀 Registrar el service worker manualmente para asegurar que esté activo en iPhone y otros dispositivos
       navigator.serviceWorker
         .register('/firebase-messaging-sw.js')
         .then(async (registration) => {
-          console.log('✅ Service Worker registrado con éxito:', registration);
+          console.log('✅ Service Worker registrado:', registration);
 
-          Notification.requestPermission().then(async (permission) => {
-            if (permission === 'granted') {
-              try {
-                // 🧽 Borrar token viejo si existe
-                await deleteToken(messaging);
+          if (Notification.permission === 'denied') {
+            alert('🚫 Las notificaciones están bloqueadas. Activá permisos en Ajustes > Safari > Notificaciones.');
+            return;
+          }
 
-                // 🔐 Obtener token nuevo con SW registrado
-                const token = await getToken(messaging, {
-                  vapidKey: 'BC0g1ahj7ENwUrpQeS8Kd8xcUOJT24JxkpW4YfYkuDWlvHiix9Ykzf6cRHiN4zGjPdoJIE-YU01cssRD5f3fKjY',
-                  serviceWorkerRegistration: registration,
-                });
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            try {
+              const token = await getToken(messaging, {
+                vapidKey: 'TU_VAPID_KEY_AQUI',
+                serviceWorkerRegistration: registration,
+              });
 
-                if (token) {
-                  console.log('🔐 Token FCM actualizado:', token);
-                  setFcmToken(token);
+              if (token) {
+                console.log('🔐 Token obtenido:', token);
 
-                  // ✅ Guardar token en Firestore
-                  await setDoc(doc(db, 'tokens', token), {
-                        token,
-                        createdAt: new Date(),
+                // Verificar si ya está guardado
+                const docRef = doc(db, 'tokens', token);
+                const existing = await getDoc(docRef);
+
+                if (!existing.exists()) {
+                  await setDoc(docRef, {
+                    token,
+                    createdAt: new Date(),
+                    platform: isIphone ? 'ios' : 'web',
                   });
-
                   console.log('✅ Token guardado en Firestore');
                 } else {
-                  console.warn('⚠️ No se pudo obtener un token nuevo');
+                  console.log('ℹ️ Token ya existe en Firestore');
                 }
-              } catch (err) {
-                console.error('❌ Error actualizando token:', err);
+              } else {
+                console.warn('⚠️ No se pudo obtener token FCM');
               }
+            } catch (err) {
+              console.error('❌ Error obteniendo token:', err);
             }
-          });
+          }
 
+          // Escuchar notificaciones recibidas
           onMessage(messaging, (payload) => {
             console.log('📩 Mensaje recibido:', payload);
             alert(`🔔 Notificación: ${payload.notification?.title}`);
           });
         })
         .catch((err) => {
-          console.error('❌ Error al registrar Service Worker:', err);
+          console.error('❌ Error al registrar SW:', err);
         });
     } else {
-      console.warn('🔕 API Notification o Service Worker no soportada');
+      console.warn('🔕 Service Worker o Notification API no soportada');
     }
   }, []);
 
@@ -101,13 +99,12 @@ const App = () => {
     return unsubscribe;
   };
 
-  const sendNotificationBackend = async (token: string, message: string) => {
+  const sendNotificationBackend = async (message: string) => {
     try {
       const res = await fetch('https://lista-tareas-backend.onrender.com/send-notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          token,
           title: 'Nueva tarea',
           body: message,
         }),
@@ -115,12 +112,12 @@ const App = () => {
 
       if (!res.ok) {
         const error = await res.text();
-        console.error('⚠️ Error desde el backend:', error);
+        console.error('⚠️ Error del backend:', error);
       } else {
-        console.log('✅ Notificación enviada correctamente');
+        console.log('✅ Notificación enviada a todos los tokens');
       }
     } catch (error) {
-      console.error('❌ Error al hacer fetch al backend:', error);
+      console.error('❌ Error haciendo fetch:', error);
     }
   };
 
@@ -131,11 +128,7 @@ const App = () => {
       fecha: new Date().toISOString(),
     });
 
-    if (fcmToken) {
-      await sendNotificationBackend(fcmToken, `Nueva tarea en ${area}: ${text}`);
-    } else {
-      console.warn('⚠️ No se encontró token para enviar notificación');
-    }
+    await sendNotificationBackend(`Nueva tarea en ${area}: ${text}`);
   };
 
   const deleteTask = async (area: Area, index: number) => {
