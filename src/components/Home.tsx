@@ -8,8 +8,8 @@ const Home = () => {
     return (
         <div style={{textAlign: 'center', marginTop:'100px'}}>
             <h1>Seleccionar Area</h1>
-            <button onClick={() => navigate('/areas/tienda')}>Tienda</button>
-            <button onClick={() => navigate('/areas/pista')}style={{ marginLeft: 20 }}>Pista</button>
+            <button onClick={() => navigate('/areas/TIENDA')}>Tienda</button>
+            <button onClick={() => navigate('/areas/PISTA')}style={{ marginLeft: 20 }}>Pista</button>
         </div>
     )
 
