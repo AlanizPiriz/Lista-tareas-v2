@@ -1,53 +1,133 @@
+// Task.tsx
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ListaTareas } from '../components/ListaTareas';
-import type { Task, Area } from '../Types';
+import { useParams } from 'react-router-dom';
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  deleteDoc,
+  doc,
+} from 'firebase/firestore';
+import { db } from '../firebase';
+import type { Task, Area, Section } from '../Types';
+import BackButton from './BackButton';
 
-interface Props {
-  tasks: Task[];
-  addTask: (text: string, area: Area) => void;
-  deleteTask: (area: Area, index: number) => void;
-  subscribeToTasks: (area: Area) => () => void;
-}
-
-const TaskPage = ({ tasks, addTask, deleteTask, subscribeToTasks }: Props) => {
-  const { area } = useParams<{ area: Area }>();
+const TaskPage = () => {
+  const { area, section } = useParams<{ area: Area; section: Section }>();
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [input, setInput] = useState('');
 
   useEffect(() => {
-    if (!area || (area !== 'tienda' && area !== 'pista')) return;
-    const unsubscribe = subscribeToTasks(area);
+    if (!area || !section) return;
+
+    const q = query(
+      collection(db, 'tasks'),
+      where('area', '==', area),
+      where('section', '==', section)
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const tareas: Task[] = [];
+      querySnapshot.forEach((doc) =>
+        tareas.push({ ...(doc.data() as Omit<Task, 'id'>), id: doc.id })
+      );
+      setTasks(tareas);
+    });
+
     return () => unsubscribe();
-  }, [area]);
+  }, [area, section]);
 
-  if (!area || (area !== 'tienda' && area !== 'pista')) return <p>Área inválida</p>;
+  const sendNotificationBackend = async (message: string) => {
+    try {
+      const res = await fetch('https://lista-tareas-backend.onrender.com/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Nueva tarea',
+          body: message,
+        }),
+      });
 
-  const filteredTasks = tasks.filter((task) => task.area === area);
-
-  const handleAdd = () => {
-    if (input.trim()) {
-      addTask(input, area);
-      setInput('');
+      if (!res.ok) {
+        const error = await res.text();
+        console.error('⚠️ Error del backend:', error);
+      } else {
+        console.log('✅ Notificación enviada a todos los tokens');
+      }
+    } catch (error) {
+      console.error('❌ Error haciendo fetch:', error);
     }
   };
 
+  const handleAdd = async () => {
+    if (!input.trim() || !area || !section) return;
+
+    await addDoc(collection(db, 'tasks'), {
+      text: input,
+      area,
+      section,
+      createdAt: new Date(),
+    });
+
+    await sendNotificationBackend(`Nueva ${section} en ${area}: ${input}`);
+    setInput('');
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteDoc(doc(db, 'tasks', id));
+  };
+
+  if (!area || !section) return <p>Área o sección inválida</p>;
+
   return (
     <div style={{ padding: 20 }}>
-      <h2>Tareas en {area.toUpperCase()}</h2>
+      <h2>
+        {section === 'tareas' ? '📋 Tareas' : '🔧 Mantenimientos'} en{' '}
+        {area.toUpperCase()}
+      </h2>
+
       <input
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Nueva tarea"
+        placeholder={section === 'tareas' ? 'Nueva tarea' : 'Nuevo mantenimiento'}
       />
       <button onClick={handleAdd}>Agregar</button>
 
-      <ListaTareas
-        listaTareas={filteredTasks}
-        borrarTarea={(index) => deleteTask(area, index)}
-      />
+      <ul style={{ marginTop: 20, padding: 0 }}>
+        {tasks.map((task) => {
+          const fecha = task.createdAt?.toDate
+            ? task.createdAt.toDate().toLocaleDateString()
+            : new Date(task.createdAt).toLocaleDateString();
 
-      <Link to="/"><button className='volver'>← Volver</button></Link>
+        
+          return (
+            <li
+              key={task.id}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '8px 12px',
+                borderBottom: '1px solid #ccc',
+                listStyle: 'none',
+                color: 'white',
+              }}
+            >
+              <div>
+                <strong>{task.text}</strong>
+              </div>
+              <strong>{fecha}</strong>
+              <button onClick={() => handleDelete(task.id)} className='borrar'>Eliminar</button>
+            </li>
+          );
+        })}
+      </ul>
+      
+
+      <BackButton />
     </div>
   );
 };

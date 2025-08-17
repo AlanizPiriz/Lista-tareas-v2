@@ -74,3 +74,11 @@ button:hover {
 .volver{
   background-color: black;
 }
+
+.volver:hover{
+  background-color: rgb(24, 23, 23);
+}
+
+.borrar:hover{
+  background-color:#c0392b;
+}
