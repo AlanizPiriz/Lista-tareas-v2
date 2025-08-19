@@ -11,8 +11,8 @@ import {
   doc,
   getDocs,
   orderBy,
-  limit,
-  deleteField,
+  //limit,
+  //deleteField,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Task, Area, Section } from '../Types';
