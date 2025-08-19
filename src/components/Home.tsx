@@ -10,7 +10,7 @@ const Home = () => {
             <h1>Seleccionar Area</h1>
             <button onClick={() => navigate('/areas/TIENDA')}>Tienda</button>
             <button onClick={() => navigate('/areas/PISTA')}style={{ marginLeft: 20 }}>Pista</button>
-            <button onClick={() => navigate('/historial')}>🕓 Ver historial</button>
+            <button onClick={() => navigate('/historial')}style={{ marginLeft: 20 }}>Ver historial</button>
         </div>
     )
 
