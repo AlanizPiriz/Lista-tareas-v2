@@ -76,10 +76,29 @@ const TaskPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await deleteDoc(doc(db, 'tasks', id));
+    const taskToDelete = tasks.find((task) => task.id === id);
+
+    if (!taskToDelete) return;
+
+    try {
+      // 1. Guardar en colección "historial"
+      await addDoc(collection(db, 'historial'), {
+        ...taskToDelete,
+        eliminadoEn: new Date(),
+        tipo: section === 'tareas' ? 'tarea' : 'mantenimiento',
+      });
+
+      // 2. Eliminar de "tasks"
+      await deleteDoc(doc(db, 'tasks', id));
+
+      console.log('🗑️ Tarea movida al historial y eliminada');
+    } catch (error) {
+      console.error('❌ Error al mover al historial:', error);
+    }
   };
 
-  if (!area || !section) return <p>Área o sección inválida</p>;
+
+    if (!area || !section) return <p>Área o sección inválida</p>;
 
   return (
     <div style={{ padding: 20 }}>

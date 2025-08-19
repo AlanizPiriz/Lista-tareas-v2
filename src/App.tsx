@@ -8,6 +8,8 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import Home from './components/Home';
 import SectionSelector from './components/SectionSelector';
 import TaskPage from './components/Task';
+import HistorialPage from './components/HistorialPage';
+
 
 const App = () => {
   useEffect(() => {
@@ -81,6 +83,7 @@ const App = () => {
         <Route path="/areas" element={<Home />} />
         <Route path="/areas/:area" element={<SectionSelector />} />
         <Route path="/areas/:area/:section" element={<TaskPage />} />
+        <Route path="/historial" element={<HistorialPage />} />
       </Routes>
     </Router>
   );
