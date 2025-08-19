@@ -53,28 +53,27 @@ const HistorialPage = () => {
               ? item.createdAt.toDate().toLocaleString()
               : new Date(item.createdAt).toLocaleString();
 
-            const eliminado = new Date(item.eliminadoEn).toLocaleString();
+            //const eliminado = new Date(item.eliminadoEn).toLocaleString();
 
             return (
-              <li
-                key={item.id}
-                style={{
-                  padding: '8px 12px',
-                  marginBottom: '8px',
-                  border: '1px solid #ccc',
-                  borderRadius: 4,
-                  background: '#333',
-                  color: 'white',
-                  listStyle: 'none',
-                }}
-              >
-                <strong>{item.text}</strong> <br />
-                📁 Área: {item.area} | 📂 Sección: {item.section} <br />
-                🗓️ Creado: {creado} <br />
-                🗑️ Eliminado: {eliminado} <br />
-                🏷️ Tipo: {item.tipo}
-              </li>
-            );
+                  <li
+                    key={item.id}
+                    style={{
+                      padding: '8px 12px',
+                      marginBottom: '8px',
+                      border: '1px solid #ccc',
+                      borderRadius: 4,
+                      background: '#333',
+                      color: 'white',
+                      listStyle: 'none',
+                    }}
+                  >
+                    <strong>{item.text}</strong> <br />
+                    📁 Área: {item.area} | 📂 Sección: {item.section} <br />
+                    🗓️ Creado: {creado} <br />
+                    🏷️ Tipo: {item.tipo}
+                  </li>
+                );
           })}
         </ul>
       )}

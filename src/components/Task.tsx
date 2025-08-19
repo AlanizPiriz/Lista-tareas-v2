@@ -9,6 +9,10 @@ import {
   addDoc,
   deleteDoc,
   doc,
+  getDocs,
+  orderBy,
+  limit,
+  deleteField,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Task, Area, Section } from '../Types';
@@ -76,26 +80,37 @@ const TaskPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const taskToDelete = tasks.find((task) => task.id === id);
+  const taskToDelete = tasks.find((task) => task.id === id);
 
-    if (!taskToDelete) return;
+  if (!taskToDelete) return;
 
-    try {
-      // 1. Guardar en colección "historial"
-      await addDoc(collection(db, 'historial'), {
-        ...taskToDelete,
-        eliminadoEn: new Date(),
-        tipo: section === 'tareas' ? 'tarea' : 'mantenimiento',
-      });
+  try {
+    // 👇 1. Guardar en historial
+    await addDoc(collection(db, 'historial'), {
+      ...taskToDelete,
+      eliminadoEn: new Date(),
+      tipo: section === 'tareas' ? 'tarea' : 'mantenimiento',
+    });
 
-      // 2. Eliminar de "tasks"
-      await deleteDoc(doc(db, 'tasks', id));
+    // 👇 2. Eliminar tarea original
+    await deleteDoc(doc(db, 'tasks', id));
 
-      console.log('🗑️ Tarea movida al historial y eliminada');
-    } catch (error) {
-      console.error('❌ Error al mover al historial:', error);
+    // 👇 3. Borrar entradas más viejas si hay más de 100
+    const historialRef = collection(db, 'historial');
+    const historialSnapshot = await getDocs(query(historialRef, orderBy('eliminadoEn', 'desc')));
+
+    if (historialSnapshot.size > 100) {
+      const docsToDelete = historialSnapshot.docs.slice(100); // del 101 en adelante
+      for (const docu of docsToDelete) {
+        await deleteDoc(docu.ref);
+      }
     }
-  };
+
+    console.log('🗑️ Tarea movida al historial y historial ajustado');
+  } catch (error) {
+    console.error('❌ Error al mover al historial:', error);
+  }
+};
 
 
     if (!area || !section) return <p>Área o sección inválida</p>;
