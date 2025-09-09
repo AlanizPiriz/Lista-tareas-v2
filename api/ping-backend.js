@@ -8,7 +8,7 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  const backendUrl = 'https://tu-backend-en-render.com/ping'; // reemplazá con tu URL real
+  const backendUrl = 'https://lista-tareas-backend.onrender.com/ping'; // reemplazá con tu URL real
 
   try {
     const response = await fetch(backendUrl);
