@@ -1,14 +1,11 @@
-import fetch from 'node-fetch';
+const fetch = require('node-fetch');
 
-
-// /api/ping-backend.js
-
-export const config = {
-  schedule: '58 8 * * *', // todos los días a las 8:58 AM UTC
+module.exports.config = {
+  schedule: '58 8 * * *', // 8:58 AM UTC todos los días
 };
 
-export default async function handler(req, res) {
-  const backendUrl = 'https://lista-tareas-backend.onrender.com/ping'; // reemplazá con tu URL real
+module.exports = async function handler(req, res) {
+  const backendUrl = 'https://lista-tareas-backend.onrender.com/ping';
 
   try {
     const response = await fetch(backendUrl);
@@ -21,4 +18,4 @@ export default async function handler(req, res) {
     console.error('❌ Error al hacer ping al backend:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
-}
+};
