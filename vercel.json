@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "api/ping-backend.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "builds": [
     {
       "src": "vite.config.js",
