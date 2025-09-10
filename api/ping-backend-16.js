@@ -1,8 +1,8 @@
-module.exports.config = {
+export const config = {
   schedule: '58 15 * * *', // 16:00 UTC todos los días
 };
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   const backendUrl = 'https://lista-tareas-backend.onrender.com/ping';
 
   try {
@@ -16,4 +16,4 @@ module.exports = async function handler(req, res) {
     console.error('❌ Error al hacer ping al backend (16h):', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
-};
+}
