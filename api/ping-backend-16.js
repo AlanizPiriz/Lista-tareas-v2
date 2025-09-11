@@ -7,13 +7,14 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(backendUrl);
-    const text = await response.text();
+    const data = await response.json();
 
-    console.log('✅ Ping enviado con éxito al backend (16h):', text);
+    console.log('✅ Ping enviado con éxito al backend:', data);
 
-    res.status(200).json({ success: true, backendResponse: text });
+    res.status(200).json({ success: true, backendResponse: data });
   } catch (err) {
-    console.error('❌ Error al hacer ping al backend (16h):', err.message);
+    console.error('❌ Error al hacer ping al backend:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 }
+
