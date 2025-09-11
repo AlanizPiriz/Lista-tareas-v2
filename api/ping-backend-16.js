@@ -1,5 +1,5 @@
 export const config = {
-  schedule: '58 15 * * *', // 16:00 UTC todos los días
+  schedule: '58 15 * * *', 
 };
 
 export default async function handler(req, res) {
