@@ -1,10 +1,8 @@
-const fetch = require('node-fetch');
-
-module.exports.config = {
+export const config = {
   schedule: '58 8 * * *', // 8:58 AM UTC todos los días
 };
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   const backendUrl = 'https://lista-tareas-backend.onrender.com/ping';
 
   try {
@@ -18,4 +16,4 @@ module.exports = async function handler(req, res) {
     console.error('❌ Error al hacer ping al backend:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
-};
+}
