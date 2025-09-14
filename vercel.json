@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/ping-backend.js": {
-      "runtime": "nodejs18.x"
+      "runtime": "nodejs22.x"
     }
   },
   "builds": [
